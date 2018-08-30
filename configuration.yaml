@@ -1,0 +1,279 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude: 57.706796
+  longitude: 11.900955
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 138
+  # metric for Metric, imperial for Imperial
+  unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: Europe/Stockholm
+  # Customization file
+  customize: !include customize.yaml
+
+
+
+# Enables the frontend
+frontend:
+
+# Enables configuration UI
+config:
+
+http:
+  # Secrets are defined in the file secrets.yaml
+  api_password: !secret http_password
+  # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+  # base_url: example.duckdns.org:8123
+
+# Checks for available updates
+# Note: This component will send some information about your system to
+# the developers to assist with development of Home Assistant.
+# For more information, please see:
+# https://home-assistant.io/blog/2016/10/25/explaining-the-updater/
+updater:
+  # Optional, allows Home Assistant developers to focus on popular components.
+  # include_used_components: true
+
+# Discover some devices automatically
+discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+conversation:
+
+# Enables support for tracking state changes over time
+history:
+
+# View all events in a logbook
+logbook:
+
+# Enables a map showing the location of tracked devices
+map:
+
+google:
+  client_id: 865469111727-f6gp3eqtvop0i1j8c4o8uebldp95q49u.apps.googleusercontent.com
+  client_secret: QYkgKF3U-uQWsCvzOuFavjxw
+
+# Track the sun
+sun:
+weather:
+  - platform: openweathermap
+    api_key: "61939d40f6dbe94b6e504e72a2bb9283"
+mqtt:
+  embedded:
+    listeners:
+      default:
+        max-connections: 5000
+        bind: 192.168.1.6:1883
+        type: tcp
+      ws-1:
+          bind: 192.168.1.6:8888
+          type: ws
+    auth:
+      plugins: ['auth.anonymous']
+      allow-anonymous: true
+  broker: 192.168.1.6
+  port: 1883
+
+# Weather prediction
+sensor:
+  - platform: yr
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      - 'date_time'
+      - 'time_date'
+      - 'time_utc'
+      - 'beat'
+  - platform: openweathermap
+    api_key: "61939d40f6dbe94b6e504e72a2bb9283"
+    monitored_conditions:
+      - temperature
+hdmi_cec:
+  devices:
+    TV: 0.0.0.0
+    Home assistant: 1.0.0.0
+    Chromecast: 3.0.0.0
+
+# Text to speech
+tts:
+  - platform: google
+    language: 'sv'
+light:
+  - platform: xiaomi_miio
+    name: Xiaomi Philips Smart LED Ball
+    host: 192.168.1.98
+    token: d1492d09a6d3fe2be6ec30276061e14d
+    model: philips.light.bulb
+remote:
+  - platform: xiaomi_miio
+    name: "Fjärrkontroll vardagsrum"
+    host: 192.168.1.80
+    token: 26b4c60fd3c61f5bace42a9540a41432
+    commands:
+      turn_on_off_tv:
+        command:
+          - raw:Z6VLACMCAABLAgAAdAYAALIIAABzEQAARSMAAKScAAAseAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABFAQEhAQEBAQEhIQEhISEhIQEBASEBAQEBISEhASEhISFhNXE1AQ=
+      input_tv:
+        command:
+          - raw:Z6UDAVUAAAAmAgAARwIAAKgFAAB3BgAAtggAAHcRAAA9IwAAvToAAMNAAACwgQAApJwAACx4AQCQ3AEAAAAAAAAAAABnEhJCEhISEhJCQhJCQkJCQkJCEkISEhISEhJCEkJCQkKyV8JXwl=
+
+notify:
+    name: pushbullet_notifications
+    platform: pushbullet
+    api_key: o.0znkqb48KtlRWhQQkIyr3GafRy0IRLxy
+cover:
+  - platform: mqtt
+    name: "Bedroom blind"
+    command_topic: "/raw/esp8266/3673968/in"
+    state_topic: "/raw/esp8266/3673968/out"
+    value_template: '{{ value_json.position }}'
+    qos: 0
+    retain: true
+    payload_open: "100"
+    payload_close: "0"
+    payload_stop: "0"
+
+alarm_control_panel:
+  - platform: manual
+    name: Home Alarm
+    #code: 1586
+    pending_time: 120
+    delay_time: 20
+    trigger_time: 4
+    disarmed:
+      trigger_time: 0
+    armed_home:
+      pending_time: 120
+      delay_time: 0
+
+device_tracker:
+  - platform: asuswrt
+    interval_seconds: 30
+    host: 192.168.1.1
+    username: admin
+    password: Henke1586
+    protocol: telnet
+  - platform: nmap_tracker
+    consider_home: 300
+    interval_seconds: 30
+    hosts:
+      - 192.168.0.1/24
+  - platform: mqtt
+    devices:
+      1_key: 'location/1'
+      2_key: 'location/2'
+      3_key: 'location/3'
+      4_key: 'location/4'
+  - platform: ping
+    hosts:
+      hostone: 192.168.0.4
+
+camera:
+  - platform: ffmpeg
+    name: Outcam
+    input: -rtsp_transport tcp -i rtsp://hankthetank:Henke1586@192.168.1.128:10554/tcp/av0_0
+    ffmpeg_bin: /usr/bin/ffmpeg
+
+xiaomi_aqara:
+    discovery_retry: 5
+    gateways:
+      key: nmv5qepno28qrh8l
+switch:
+  - platform: mqtt
+    name: "Door Bell"
+    state_topic: 'home/SRFBtoMQTT'
+    command_topic: 'home/SRFBtoMQTT'
+    #availability_topic: "home/bedroom/switch1/available"
+    payload_on: "14213025"
+    payload_off: "14213025off"
+    optimistic: false
+    qos: 0
+    retain: true
+binary_sensor:
+  - platform: ffmpeg_motion
+    name: Ip Cam
+    input: -rtsp_transport tcp -i rtsp://hankthetank:Henke1586@192.168.1.128:10554/tcp/av0_0
+    changes: 10
+  - platform: mqtt
+    state_topic: 'home/SRFBtoMQTT'
+    name: 'PIR1'
+    payload_on: '7672454'
+    payload_off: '7672454off'
+    device_class: motion
+  - platform: mqtt
+    state_topic: 'home/SRFBtoMQTT'
+    name: 'PIR2'
+    payload_on: '12101638'
+    payload_off: '12101638off'
+    device_class: motion
+
+  - platform: mqtt
+    state_topic: 'home/SRFBtoMQTT'
+    name: 'DOOR1'
+    payload_on: '10739350'
+    payload_off: '10739350off'
+    device_class: door
+  - platform: mqtt
+    state_topic: 'home/SRFBtoMQTT'
+    name: 'DOOR2'
+    payload_on: '5138246'
+    payload_off: '5138246off'
+    device_class: door
+
+
+script:
+  turn_on_tv:
+    sequence:
+      - service: remote.send_command
+        entity_id: 'remote.fjarrkontroll_vardagsrum'
+        data:
+          command:
+            - 'turn_on_off_tv'
+  input_tv:
+    sequence:
+      - service: remote.send_command
+        entity_id: 'remote.fjarrkontroll_vardagsrum'
+        data:
+          command:
+            - 'input_tv'
+
+# Cloud
+cloud:
+automation old:
+- trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0001b7ac08
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.DOOR1
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.DOOR2
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.PIR1
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.PIR2
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.ip_cam
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: alarm_control_panel.home_alarm
+      state: armed_away
+  action:
+    - service: alarm_control_panel.alarm_trigger
+      entity_id: alarm_control_panel.home_alarm
+group: !include groups.yaml
+automation: !include automations.yaml
+#script: !include scripts.yaml

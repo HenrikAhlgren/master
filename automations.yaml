@@ -1,0 +1,288 @@
+- id: a
+  alias: Lisa Hemma
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: device_tracker.lisasiphone
+    from: 'not_home'
+    to: 'home'
+  action:
+    - service: tts.google_say
+      entity_id: media_player.kok
+      data:
+        message: 'Välkommen hem Lisa'
+        language: 'sv'
+- id: b
+  alias: Blå nyckel hemma
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: device_tracker.1_key
+    from: 'away'
+    to: 'home'
+  action:
+    - service: notify.pushbullet_notifications
+      data_template:
+        message: >
+          Blue key arrived at home
+
+    - service: tts.google_say
+      entity_id: media_player.kok
+      data:
+        message: 'blue key at home'
+        language: 'sv'
+- id: c
+  alias: Alarm triggered
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: alarm_control_panel.home_alarm
+    to: 'triggered'
+  action:
+    - service: notify.pushbullet_notifications
+      data_template:
+        message: >
+          Alarm Triggered
+- id: d
+  alias: Disarm alarm
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: group.group
+    from: 'not_home'
+    to: 'home'
+  action:
+    - service: alarm_control_panel.alarm_disarm
+      entity_id: alarm_control_panel.home_alarm
+- id: e
+  alias: Turn on alarm
+  hide_entity: True
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: group.group
+    from: 'home'
+    to: 'not_home'
+  action:
+    - service: alarm_control_panel.alarm_arm_away
+      entity_id: alarm_control_panel.home_alarm
+- id: g
+  alias: Dörrklockan
+  hide_entity: True
+  trigger:
+    platform: event
+    event_type: click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001d8e1a9
+      click_type: single
+  action:
+    - service: hdmi_cec.select_device
+      data:
+        device: switch.hdmi_4
+- id: h
+  alias: Tänd nattlampa altan
+  hide_entity: True
+  trigger:
+    platform: sun
+    event: sunset
+    offset: "-00:15:00"
+  action:
+    - service: light.turn_on
+      entity_id: light.xiaomi_philips_smart_led_ball
+- id: i
+  alias: Släck nattlampa altan
+  hide_entity: True
+  trigger:
+    platform: sun
+    event: sunrise
+    offset: "+00:15:00"
+  action:
+    - service: light.turn_off
+      entity_id: light.xiaomi_philips_smart_led_ball
+- id: j
+  alias: Tänd nattlampa köket
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: binary_sensor.motion_sensor_158d0001ad4576
+    from: 'off'
+    to: 'on'
+  condition:
+    condition: numeric_state
+    entity_id: sensor.illumination_7811dcb7ed7b
+    below: 300
+  action:
+    - service: light.turn_on
+      entity_id: light.gateway_light_7811dcb7ed7b
+      data:
+        brightness: 5
+    - service: automation.turn_on
+      data:
+        entity_id: automation.MOTION_OFF
+- id: k
+  alias: Släck kökslampan
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: binary_sensor.motion_sensor_158d0001ad4576
+    from: 'on'
+    to: 'off'
+    for:
+      minutes: 5
+  action:
+    - service: light.turn_off
+      entity_id: light.gateway_light_7811dcb7ed7b
+    - service: automation.turn_off
+      data:
+        entity_id: automation.Motion_off
+- id: l
+  alias: Brandlarm
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: binary_sensor.smoke_sensor_158d0001d835da
+    from: 'off'
+    to: 'on'
+  action:
+    - service: notify.pushbullet_notifications
+      data:
+        message: 'Brand!'
+    - service: xiaomi_aqara.play_ringtone 
+      data:
+        gw_mac: 7811DCB7ED7B
+        ringtone_id: 2
+        ringtone_vol: 100
+- id: m
+  alias: Reset PIR1 state
+  hide_entity: True
+  initial_state: 'on' 
+  trigger:
+    platform: state
+    entity_id: binary_sensor.pir1
+    to: 'on'
+    for:
+      seconds: 5 
+  action:
+    - service: mqtt.publish
+      data:
+        topic: "home/SRFBtoMQTT"
+        payload: "7672454off"
+- id: n
+  alias: Reset Door Bell state
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: switch.door_bell
+    to: 'on'
+    for:
+      seconds: 5 
+  action:
+    - service: mqtt.publish
+      data:
+        topic: "home/SRFBtoMQTT"
+        payload: "14213025off"
+- id: o
+  alias: Dörrklockan2
+  hide_entity: True
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.door_bell
+    to: 'on'  
+  action:
+    - data:
+        gw_mac: 7811DCB7ED7B
+        ringtone_id: '10'
+        ringtone_vol: '100'
+      service: xiaomi_aqara.play_ringtone
+
+    - service: tts.google_say
+      entity_id: media_player.kok
+      data:
+        message: 'Det är någon vid dörren'
+        language: 'sv'
+- id: p
+  alias: Reset Door1 
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door1
+    to: 'on'
+    for:
+      seconds: 5 
+  action:
+    - service: mqtt.publish
+      data:
+        topic: "home/SRFBtoMQTT"
+        payload: "10739350off"
+- id: q
+  alias: Reset Door2
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door2
+    to: 'on'
+    for:
+      seconds: 5 
+  action:
+    - service: mqtt.publish
+      data:
+        topic: "home/SRFBtoMQTT"
+        payload: "5138246off"
+- id: r
+  alias: Reset Pir2
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: binary_sensor.pir2
+    to: 'on'
+    for:
+      seconds: 5 
+  action:
+    - service: mqtt.publish
+      data:
+        topic: "home/SRFBtoMQTT"
+        payload: "12101638off"
+- id: s
+  alias: Vatten
+  hide_entity: True
+  trigger:
+    platform: state
+    entity_id: binary_sensor.water_leak_sensor_158d000237339b
+    from: 'off'
+    to: 'on'
+  action:
+    - service: notify.pushbullet_notifications
+      data:
+        message: 'Vatten!'
+- id: t
+  alias: mqttmessage
+  trigger:
+    platform: time
+    minutes: '/1'
+    seconds: 00
+  condition:
+    condition: state
+    entity_id: calendar.henrik1066gmailcom
+    state: 'off'
+  action:
+    - service: mqtt.publish
+      data:
+        topic: "inTopic"
+        payload_template: "Time is: {{ states('sensor.time') }}"
+        
+- id: u
+  alias: mqttmessage
+  trigger:
+    platform: time
+    minutes: '/1'
+    seconds: 00
+  condition:
+    condition: state
+    entity_id: calendar.henrik1066gmailcom
+    state: 'on'
+  action:
+    - service: mqtt.publish
+      data:
+        topic: "inTopic"
+        payload_template: "{{ states.calendar.henrik1066gmailcom.attributes.message }}"
